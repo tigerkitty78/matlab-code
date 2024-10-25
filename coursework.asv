@@ -1,0 +1,59 @@
+
+clear all
+clc
+close all
+
+folderPath = 'C:\Users\dasantha\Desktop\CW-Data\CW-Data';  % this is the folder the data files are in
+files = dir(fullfile(folderPath, '*.mat'));  % Get all .mat files
+
+
+for i = 1:10
+    % Construct the full file path
+    fileName = sprintf('U%02d_Acc_TimeD_FDay.mat', i);
+    data = load(fullfile(folderPath, fileName));  % Load the file
+
+% Access the field from the struct
+cellArray = data.Acc_TD_Feat_Vec;  % Adjust if needed
+
+% If it's a cell array, extract the matrix from it
+featureMatrix = data.Acc_TD_Feat_Vec;  % Directly access the field
+
+
+    featureMatrix = data.featureMatrix;  % Extract the feature matrix
+    allFeatures = [allFeatures; featureMatrix];  % Concatenate for all users
+
+    normalizedFeatures = normalize(allFeatures, 'range');  % Scale between 0 and 1
+
+    % Define and configure the neural network
+net = feedforwardnet([10, 5]);  % 2 hidden layers
+
+% Divide data into training and testing sets
+trainRatio = 0.7;
+[trainInd, ~, testInd] = dividerand(size(normalizedFeatures, 1), trainRatio, 0, 1 - trainRatio);
+
+% Extract training and testing sets
+X_train = normalizedFeatures(trainInd, :);
+y_train = labels(trainInd);  % Assuming you have labels loaded
+X_test = normalizedFeatures(testInd, :);
+y_test = labels(testInd);
+
+% Train the neural network
+[net, tr] = train(net, X_train', y_train');
+
+% Evaluate the performance on the test set
+y_pred = net(X_test');
+mseValue = perform(net, y_test', y_pred);
+fprintf('MSE: %.4f\n', mseValue);
+
+end
+
+% Check the size of the combined data
+
+
+
+
+
+data = load('U01_Acc_TimeD_FDay.mat');  % Replace with your actual file name
+whos data  % Shows variables, sizes, and types inside the file
+featureMatrix = data.featureMatrix;  % Adjust this to match the variable name
+labels = data.labels;  % Example: Check if labels are stored in the MAT file
